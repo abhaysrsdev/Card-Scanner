@@ -1,7 +1,7 @@
 import Dexie, { Table } from 'dexie';
 
 export interface Customer {
-  id?: string;
+  id?: number;
   customerId: string;
   name: string;
   company: string;
@@ -25,12 +25,15 @@ export interface Customer {
 }
 
 export class CardScannerDB extends Dexie {
-  customers!: Table<Customer, string>;
+  customers!: Table<Customer, number>;
 
   constructor() {
     super('CardScannerDB');
     this.version(1).stores({
       customers: 'id, customerId, name, company, mobile, email, gst'
+    });
+    this.version(2).stores({
+      customers: '++id, customerId, name, company, mobile, email, gst'
     });
   }
 }
