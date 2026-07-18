@@ -102,6 +102,21 @@ export default function ScanPage() {
     };
 
     await db.customers.add(newCustomer);
+
+    // Sync to Google Sheets
+    try {
+      await fetch("https://script.google.com/macros/s/AKfycbxUtBqzSSB1hmfQRansGPcg4Lmc9--CsOD0DRAIzRiuO86tpr9bCgWcpVjaljU6b3ZK/exec", {
+        method: "POST",
+        mode: "no-cors",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(newCustomer)
+      });
+    } catch (error) {
+      console.error("Failed to sync to Google Sheets:", error);
+    }
+
     router.push('/');
   };
 
