@@ -77,8 +77,9 @@ export default function ScanPage() {
       }
     }
 
-    const customerId = await generateCustomerId();
+    const customerId = await generateCustomerId().catch(() => "CUST-000001");
     const newCustomer: Customer = {
+      id: crypto.randomUUID(),
       customerId,
       name: formData.name || '',
       company: formData.company || '',
@@ -101,17 +102,29 @@ export default function ScanPage() {
       updatedAt: new Date().toISOString(),
     };
 
-    await db.customers.add(newCustomer);
+    try {
+      await db.customers.add(newCustomer);
+    } catch (err) {
+      console.error("Local DB Save Error:", err);
+      alert("Failed to save locally, but we will still try to send to Google Sheets!");
+    }
 
     // Sync to Google Sheets
     try {
+      const formBody = new URLSearchParams();
+      for (const [key, value] of Object.entries(newCustomer)) {
+        if (value !== undefined && value !== null) {
+          formBody.append(key, value.toString());
+        }
+      }
+      
       await fetch("https://script.google.com/macros/s/AKfycbxUtBqzSSB1hmfQRansGPcg4Lmc9--CsOD0DRAIzRiuO86tpr9bCgWcpVjaljU6b3ZK/exec", {
         method: "POST",
         mode: "no-cors",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/x-www-form-urlencoded"
         },
-        body: JSON.stringify(newCustomer)
+        body: formBody.toString()
       });
     } catch (error) {
       console.error("Failed to sync to Google Sheets:", error);
