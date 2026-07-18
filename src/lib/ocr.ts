@@ -26,8 +26,8 @@ export async function processVisitingCard(imageSource: string): Promise<Partial<
 
     const data: Partial<Customer> = await response.json();
     return data;
-  } catch (error) {
+  } catch (error: any) {
     console.error("OCR API Error:", error);
-    throw new Error("Failed to process visiting card with Gemini.");
+    throw new Error(error.message || "Failed to process visiting card with Gemini.");
   }
 }

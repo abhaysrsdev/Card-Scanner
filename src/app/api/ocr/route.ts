@@ -64,8 +64,8 @@ Do not add any markdown formatting like \`\`\`json. Just return the raw JSON obj
     const data = JSON.parse(text);
 
     return NextResponse.json(data);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Gemini OCR Error:", error);
-    return NextResponse.json({ error: "Failed to process image with Gemini." }, { status: 500 });
+    return NextResponse.json({ error: error.message || "Failed to process image with Gemini." }, { status: 500 });
   }
 }
