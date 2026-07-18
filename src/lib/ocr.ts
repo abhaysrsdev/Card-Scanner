@@ -11,8 +11,17 @@ export async function processVisitingCard(imageSource: string): Promise<Partial<
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || "Failed to process image via API.");
+      let errorMsg = "Failed to process image via API.";
+      try {
+        const errorData = await response.json();
+        errorMsg = errorData.error || errorMsg;
+      } catch (e) {
+        if (response.status === 413) errorMsg = "Image is too large. Please upload a smaller image.";
+        else if (response.status === 429) errorMsg = "Too many scans! Please wait a minute before scanning again (Rate Limit).";
+        else if (response.status === 504) errorMsg = "The AI took too long to respond. Please try again.";
+        else errorMsg = `Server Error (${response.status})`;
+      }
+      throw new Error(errorMsg);
     }
 
     const data: Partial<Customer> = await response.json();

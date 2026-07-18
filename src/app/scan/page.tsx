@@ -17,12 +17,45 @@ export default function ScanPage() {
   const [formData, setFormData] = useState<Partial<Customer>>({});
   const [duplicateWarning, setDuplicateWarning] = useState(false);
 
+  const compressImage = (base64Str: string): Promise<string> => {
+    return new Promise((resolve) => {
+      const img = new window.Image();
+      img.src = base64Str;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 1200;
+        const MAX_HEIGHT = 1200;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx?.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', 0.7)); 
+      };
+      img.onerror = () => resolve(base64Str);
+    });
+  };
+
   const handleCapture = useCallback(async () => {
     if (webcamRef.current) {
       const imageSrc = webcamRef.current.getScreenshot();
       if (imageSrc) {
         setImage(imageSrc);
-        await runOCR(imageSrc);
+        const compressed = await compressImage(imageSrc);
+        await runOCR(compressed);
       }
     }
   }, [webcamRef]);
@@ -34,7 +67,8 @@ export default function ScanPage() {
       reader.onloadend = async () => {
         const base64 = reader.result as string;
         setImage(base64);
-        await runOCR(base64);
+        const compressed = await compressImage(base64);
+        await runOCR(compressed);
       };
       reader.readAsDataURL(file);
     }
@@ -46,8 +80,8 @@ export default function ScanPage() {
       const extracted = await processVisitingCard(imageSrc);
       setFormData(extracted);
       setMode('review');
-    } catch (error) {
-      alert("Failed to read card. Please try again or enter details manually.");
+    } catch (error: any) {
+      alert(error.message || "Failed to read card. Please try again or enter details manually.");
       setMode('review');
     } finally {
       setLoading(false);
