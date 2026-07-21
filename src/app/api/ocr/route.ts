@@ -45,7 +45,7 @@ export async function POST(req: Request) {
 Do not add any markdown formatting like \`\`\`json. Just return the raw JSON object.`;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-3.1-flash',
+      model: 'gemini-2.5-flash',
       contents: [
         prompt,
         {
@@ -54,7 +54,10 @@ Do not add any markdown formatting like \`\`\`json. Just return the raw JSON obj
             mimeType: mimeType
           }
         }
-      ]
+      ],
+      config: {
+        responseMimeType: 'application/json'
+      }
     });
 
     let text = response.text || "{}";
